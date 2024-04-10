@@ -1,4 +1,5 @@
 Jogo da Velha em PHP, HTML e JavaScript
+
 Este é um simples jogo da velha desenvolvido utilizando as tecnologias web: PHP para a lógica de servidor, HTML para a estrutura da página e JavaScript para a interatividade do cliente. O jogo oferece dois modos de jogo:
 
 
