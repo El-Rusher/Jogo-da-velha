@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jogo da Velha</title>
+<style>
+    /* Estilos para o jogo */
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f8f8f8;
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    .title {
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    .options {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        margin-bottom: 20px;
+    }
+
+    .options button {
+        margin: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        background-color: #2196F3;
+        color: #fff;
+        transition: background-color 0.3s ease;
+    }
+
+    .options button:hover {
+        background-color: #0d8aed;
+    }
+
+    .submenu {
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        margin-bottom: 20px;
+    }
+
+    .submenu button {
+        margin: 5px;
+        padding: 10px 20px;
+        font-size: 16px;
+        cursor: pointer;
+        border: none;
+        border-radius: 5px;
+        background-color: #FF9800;
+        color: #fff;
+        transition: background-color 0.3s ease;
+    }
+
+    .submenu button:hover {
+        background-color: #e68a00;
+    }
+
+    .board {
+        display: none;
+        grid-template-columns: repeat(3, 100px);
+        grid-template-rows: repeat(3, 100px);
+        gap: 4px;
+        width: 306px; /* (100px * 3) + (4px * 2) */
+        background-color: #fff;
+        border: 4px solid #333;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .cell {
+        border: 2px solid #333;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 36px;
+        cursor: pointer;
+        background-color: #f0f0f0;
+        transition: background-color 0.3s ease;
+    }
+
+    .cell:hover {
+        background-color: #e0e0e0;
+    }
+
+    .cell[data-player="X"] {
+        color: #2196F3; /* Azul */
+    }
+
+    .cell[data-player="0"] {
+        color: #FF9800; /* Laranja */
+    }
+
+    .cell[data-winner="true"] {
+        background-color: #8eff8e; /* Verde claro */
+    }
+
+    .cell[data-winner="true"]:hover {
+        background-color: #7eff7e; /* Verde mais escuro */
+    }
+
+    .message {
+        margin-top: 20px;
+        text-align: center;
+        font-size: 24px;
+    }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="title">Jogo da velha em HTML, CSS e JavaScript</div>
+    <div class="options">
+        <button id="playAgainstHuman">Jogar contra outra pessoa</button>
+        <button id="playAgainstComputer">Jogar contra o computador</button>
+    </div>
+    <div class="submenu" id="difficultyMenu">
+        <div class="title">Escolha a dificuldade</div>
+        <button id="easyMode">Fácil</button>
+        <button id="mediumMode">Médio</button>
+        <button id="hardMode">Difícil</button>
+    </div>
+    <div class="byline" id="byline">by: gui.silva.cosplay</div>
+    <div class="board" id="board">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+</div>
+
+<script>
+    /* Variáveis globais */
+    const board = document.getElementById('board');
+    const cells = document.querySelectorAll('.cell');
+    let currentPlayer = 'X';
+    let gameEnd = false;
+    let againstComputer = false;
+    let difficulty = '';
+
+    /* Event listener para "Jogar contra outra pessoa" */
+    document.getElementById('playAgainstHuman').addEventListener('click', () => {
+        againstComputer = false;
+        hideByline();
+        startGame();
+    });
+
+    /* Event listener para "Jogar contra o computador" */
+    document.getElementById('playAgainstComputer').addEventListener('click', () => {
+        againstComputer = true;
+        document.querySelector('.options').style.display = 'none';
+        document.querySelector('.submenu').style.display = 'flex';
+        hideByline();
+    });
+
+    /* Função para ocultar a linha "byline" */
+    function hideByline() {
+        document.getElementById('byline').style.display = 'none';
+    }
+    /* Event listeners dos botões de dificuldade */
+    document.getElementById('easyMode').addEventListener('click', () => {
+        difficulty = 'easy';
+        startGame();
+    });
+
+    document.getElementById('mediumMode').addEventListener('click', () => {
+        difficulty = 'medium';
+        startGame();
+    });
+
+    document.getElementById('hardMode').addEventListener('click', () => {
+        difficulty = 'hard';
+        startGame();
+    });
+
+    /* Função principal */
+    cells.forEach(cell => {
+        cell.addEventListener('click', () => {
+            if (cell.textContent === '' && !gameEnd) {
+                cell.textContent = currentPlayer;
+                cell.setAttribute('data-player', currentPlayer);
+                if (checkWinner()) {
+                    setTimeout(() => {
+                        alert(`${currentPlayer} venceu!`);
+                        resetGame();
+                    }, 500); // Delay de 0.5 segundo
+                    gameEnd = true;
+                } else if (checkDraw()) {
+                    setTimeout(() => {
+                        alert('Empate!');
+                        resetGame();
+                    }, 500); // Delay de 0.5 segundo
+                    gameEnd = true;
+                } else {
+                    currentPlayer = currentPlayer === 'X' ? '0' : 'X';
+                    if (againstComputer && currentPlayer === '0') {
+                        makeComputerMove();
+                    }
+                }
+            }
+        });
+    });
+
+    /* Função de inicialização do jogo */
+    function startGame() {
+        document.querySelector('.options').style.display = 'none';
+        document.querySelector('.title').style.display = 'none';
+        document.querySelector('.submenu').style.display = 'none';
+        document.querySelector('.board').style.display = 'grid';
+        if (againstComputer && currentPlayer === '0') {
+            makeComputerMove();
+        }
+    }
+
+    /* Função para verificar o vencedor */
+    function checkWinner() {
+        const lines = [
+            [0, 1, 2],
+            [3, 4, 5],
+            [6, 7, 8],
+            [0, 3, 6],
+            [1, 4, 7],
+            [2, 5, 8],
+            [0, 4, 8],
+            [2, 4, 6]
+        ];
+        for (let line of lines) {
+            const [a, b, c] = line;
+            if (cells[a].textContent !== '' &&
+                cells[a].textContent === cells[b].textContent &&
+                cells[a].textContent === cells[c].textContent) {
+                cells[a].setAttribute('data-winner', true);
+                cells[b].setAttribute('data-winner', true);
+                cells[c].setAttribute('data-winner', true);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /* Função para verificar empate */
+    function checkDraw() {
+        return [...cells].every(cell => cell.textContent !== '');
+    }
+
+    /* Função para resetar o jogo */
+    function resetGame() {
+        cells.forEach(cell => {
+            cell.textContent = '';
+            cell.removeAttribute('data-winner');
+            cell.removeAttribute('data-player');
+        });
+        currentPlayer = 'X';
+        gameEnd = false;
+        againstComputer = false;
+    }
+
+    /* Função para a jogada do computador */
+    function makeComputerMove() {
+        if (difficulty === 'easy') {
+            makeRandomMove();
+        } else if (difficulty === 'medium') {
+            makeRandomMove(); // Temporário
+        } else if (difficulty === 'hard') {
+            makeRandomMove(); // Temporário
+        }
+    }
+
+    /* Função para uma jogada aleatória */
+    function makeRandomMove() {
+        const emptyCells = [...cells].filter(cell => cell.textContent === '');
+        const randomIndex = Math.floor(Math.random() * emptyCells.length);
+        emptyCells[randomIndex].click();
+    }
+
+    /* Função para uma jogada de dificuldade média */
+    function makeMediumMove() {
+        // Lógica para dificuldade média
+    }
+
+    /* Função para uma jogada de dificuldade avançada */
+
+    function makeHardMove() {
+    // Lógica para dificuldade avançada
+    }
+
+</script>
+
+</body>
+</html>
